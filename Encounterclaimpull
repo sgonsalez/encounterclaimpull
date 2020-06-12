@@ -1,0 +1,38 @@
+/* sample code for pulling claims associaated with primary diagnosis codes on the claims */
+/ *below is the example using primary diagnosis codes to pull diabetes claims */
+
+create table diab_costs_cy15 as select
+   a.* from t_ca_icn@e2_dcv2192 a,
+            t_ca_claim_key@e2_dcv2192 b
+where  a.dte_ptn  between to_date(20140101,'YYYYMMDD') and to_date(20151231,'YYYYMMDD')
+  and  a.claim_key=b.claim_key
+  and  a.CDE_DTL_STATUS = 'P'
+  and  a.IND_LATEST_CLM = 'Y'
+  and  b.cde_hdr_status='P'
+  and a.cde_clm_type not in ('A','B','C')/* excluding Xover claim*/
+  and (substr( a.cde_diag_prim,1,3) in ('250','E10','E11','O24')
+   or  substr( a.cde_diag_prim,1,4) in ('E113','H210')
+   or a.cde_diag_prim in ('3572','3620','36441','6480','E0842','E0942','E1042','E1142','E1342'))
+
+
+/* below is the sample code using any one of diagnoses on the claims to pull diabete claims*/
+
+drop table diab_costs_cy15_c
+
+create table diab_costs_cy15_c as select
+   distinct a.sak_recip, a.id_prov_subm, a.sak_claim, a.amt_paid,
+            a.cde_clm_type, a.dte_ptn
+       from t_ca_icn@e2_dcv2192 a,
+            t_ca_claim_key@e2_dcv2192 b,
+            t_ca_diag@e2_dcv2192 c
+where  a.dte_ptn  between to_date(20140101,'YYYYMMDD') and to_date(20151231,'YYYYMMDD')
+  and  c.dte_ptn  between to_date(20140101,'YYYYMMDD') and to_date(20151231,'YYYYMMDD')
+  and a.sak_claim=c.sak_claim
+  and a.CDE_DTL_STATUS = 'P'
+  and a.IND_LATEST_CLM = 'Y'
+  and a.claim_key=b.claim_key
+  and b.cde_hdr_status='P'
+  /*and a.cde_clm_type not in ('A','B','C')*/ 
+  and (substr( c.cde_diag,1,3) in ('250','E10','E11','O24')
+   or  substr( c.cde_diag,1,4) in ('E113','H210')
+   or c.cde_diag in ('3572','3620','36441','6480','E0842','E0942','E1042','E1142','E1342'))
